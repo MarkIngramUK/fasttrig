@@ -74,6 +74,7 @@ int main()
 	{
 		angleIn0[i] = (rand() / (float)RAND_MAX) * (float)(M_PI * 2.0);
 		angleIn1[i] = (rand() / (float)RAND_MAX) * (float)(M_PI * 2.0);
+	
 	}
 
 	timer_t* timer = timer_create();
@@ -109,6 +110,62 @@ int main()
 
 	double ms = timer_getms(timer);
 	printf("SIMD (4 channel): %fms\n", ms);
+
+
+
+	//Collecting measurements using AVX2 which can support 8 channels of 32bit float..
+
+	timer_reset(timer);
+
+	for (int i = 0; i < count; i += 8)
+    {
+			__m256 big_pack;
+
+			big_pack.m256_f32[0] = angleIn0[i + 0];
+			big_pack.m256_f32[1] = angleIn0[i + 1];
+			big_pack.m256_f32[2] = angleIn0[i + 2];
+			big_pack.m256_f32[3] = angleIn0[i + 3];
+			big_pack.m256_f32[4] = angleIn0[i + 4];
+			big_pack.m256_f32[5] = angleIn0[i + 5];
+			big_pack.m256_f32[6] = angleIn0[i + 6];
+			big_pack.m256_f32[7] = angleIn0[i + 7];
+		
+			big_pack = _mm256_cos_ps(big_pack);
+
+			angleOut0[i + 0] = big_pack.m256_f32[0];
+			angleOut0[i + 1] = big_pack.m256_f32[1];
+			angleOut0[i + 2] = big_pack.m256_f32[2];
+			angleOut0[i + 3] = big_pack.m256_f32[3];
+			angleOut0[i + 4] = big_pack.m256_f32[4];
+			angleOut0[i + 5] = big_pack.m256_f32[5];
+			angleOut0[i + 6] = big_pack.m256_f32[6];
+			angleOut0[i + 7] = big_pack.m256_f32[7];
+
+			big_pack.m256_f32[0] = angleIn1[i + 0];
+			big_pack.m256_f32[1] = angleIn1[i + 1];
+			big_pack.m256_f32[2] = angleIn1[i + 2];
+			big_pack.m256_f32[3] = angleIn1[i + 3];
+			big_pack.m256_f32[4] = angleIn1[i + 4];
+			big_pack.m256_f32[5] = angleIn1[i + 5];
+			big_pack.m256_f32[6] = angleIn1[i + 6];
+			big_pack.m256_f32[7] = angleIn1[i + 7];
+
+			big_pack = _mm256_sin_ps(big_pack);
+
+			angleOut1[i + 0] = big_pack.m256_f32[0];
+			angleOut1[i + 1] = big_pack.m256_f32[1];
+			angleOut1[i + 2] = big_pack.m256_f32[2];
+			angleOut1[i + 3] = big_pack.m256_f32[3];
+			angleOut1[i + 4] = big_pack.m256_f32[4];
+			angleOut1[i + 5] = big_pack.m256_f32[5];
+			angleOut1[i + 6] = big_pack.m256_f32[6];
+			angleOut1[i + 7] = big_pack.m256_f32[7];
+
+		}
+
+	double ms2 = timer_getms(timer);
+	printf("SIMD (8 channel): %fms\n", ms2);
+
 
 	// Verify SIMD angles are pretty close to the CRT's calculation (to prove we're actually calculating like-for-like)
 	for (int i = 0; i < count; ++i)
